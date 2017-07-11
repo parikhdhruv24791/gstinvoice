@@ -1,0 +1,15 @@
+{
+    "apps": [
+    {
+        "name": "gst",
+        "script": "index.js",
+        "cwd": ".",
+        "exec_mode": "cluster",
+        "instances": "1",
+        "watch": true,
+        "ignore_watch" : ["node_modules", "public/components/*"],
+        "env_development": {
+            
+        }
+    }]
+}
