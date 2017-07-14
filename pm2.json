@@ -8,8 +8,8 @@
         "instances": "1",
         "watch": true,
         "ignore_watch" : ["node_modules", "public/components/*"],
-        "env_development": {
-            
+        "env": {
+            "NODE_PORT": 8080
         }
     }]
 }
