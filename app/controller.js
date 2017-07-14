@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const moment = require('moment');
 const config = require('./config');
 const Invoice = require('./invoiceModel');
 
@@ -29,16 +30,31 @@ var Controller = {
         })
     },
     saveInvoice: (req, res) => {
-    		let invoice = new Invoice(req.body)
+        req.body.invoice_date = moment(req.body.invoice_date, "DD/MM/YYYY").format('YYYY-MM-DDTHH:mm:ss');
+        let invoice = new Invoice(req.body)
         invoice.save((err) => {
-        	if(err) console.log(err);
+        	if(err) return res.status(500).send(err);
         	res.send({status : "success"});
         })
     },
     getInvoiceById: (req, res) => {
-        Invoice.find({_id:req.params.id}, (err, data) => {
+        Invoice.find({invoice_number:req.params.id}, (err, data) => {
             console.log(data);
             res.send(data);
+        })
+    },
+    saveInvoiceById: (req, res) => {
+        console.log("req.params.id= ",req.params.id)
+        var updateQuery = {$set: req.body};
+        Invoice.update({invoice_number:req.params.id}, updateQuery, {upsert:true}, (err, invoice) => {
+            console.log(invoice);
+            res.send(invoice);
+        })
+    },
+    getInvoiceCount: (req, res) => {
+        Invoice.count({}, (err, data) => {
+            console.log(data);
+            res.json({count:data});
         })
     },
 }

@@ -58,11 +58,11 @@ input:focus {
   line-height:2.5em;
 }
 .branding {
-  padding-bottom:2em;
+  padding-bottom:1em;
   border-bottom:1px solid #ddd;
 }
 .logo-container {
-  text-align:right;
+  text-align:center;
 }
 .infos .right {
   text-align:right;
@@ -81,9 +81,11 @@ input:focus {
 }
 
 input, textarea{
+  border: 1px solid gray;
+}
+.noBorder {
   border: 1px solid #FFF;
 }
-
 .container input:hover, .container textarea:hover,
 .table-striped > tbody > tr:nth-child(2n+1) > td input:hover,
 .container input:focus, .container textarea:focus,
@@ -109,7 +111,7 @@ body{
 }
 
 .infos input{
-  width: 300px;
+  width: 250px;
 }
 
 .align-right input{

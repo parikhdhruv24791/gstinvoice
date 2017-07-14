@@ -5,25 +5,43 @@ angular.module('invoicing', [])
 
 // The invoice displayed when the user first uses the app
 .constant('DEFAULT_INVOICE', {
-  tax: 28.00,
-  invoice_number: 10,
+  subTotal:0,
+  totalAfterDiscount:0,
+  totalTax:0,
+  grandTotal:0,
+  tax :{
+    sgst: 14,
+    cgst: 14,
+    igst: 0
+  },
+  discount: 0.00,
+  pf: 0,
+  invoice_number: 0,
   customer_info: {
-    name: 'Mr. John Doe',
-    web_link: 'John Doe Designs Inc.',
-    address1: '1 Infinite Loop',
-    address2: 'Cupertino, California, US',
-    postal: '90210'
+    name: '',
+    web_link: '',
+    address1: '',
+    address2: '',
+    postal: '',
+    gstin: 0,
+    ponumber: 0,
+    whetherReverseTax: false
   },
   company_info: {
-    name: 'Metaware Labs',
-    web_link: 'www.metawarelabs.com',
-    address1: '123 Yonge Street',
-    address2: 'Toronto, ON, Canada',
-    postal: 'M5S 1B6'
+    name: 'Imeprial Paints',
+    web_link: 'Manufacturer of Industrial & Decorative Paints, Varnishes & Thinner',
+    address1: 'L-322/16-3, 40 Shed Area, GIDC, Vapi - 396195',
+    address2: 'Ph: 0260-2451674 Email: imperial.paints@yahoo.co.in',
+    postal: 'GSTIN No: 24ABZPC8546P1ZQ'
   },
   items:[
-    { qty: 10, description: 'Gadget', cost: 9.95 }
-  ]
+    
+  ],
+  invoice_date: moment().format("DD/MM/YYYY"),
+  dispatch_mode: "",
+  vehicle_number: "",
+  dispatch_time: "",
+  dispatch_date: ""
 })
 
 // Service for accessing local storage
@@ -147,7 +165,9 @@ angular.module('invoicing', [])
     }();
 
     $scope.availableCurrencies = Currency.all();
-
+    $http.get("http://192.168.225.158:8080/count").then( function(response) {
+       $scope.invoice.invoice_number = response.data.count;
+    });
   })()
   // Adds an item to the invoice's items
   $scope.addItem = function() {
@@ -172,9 +192,11 @@ angular.module('invoicing', [])
 
   $scope.saveInfo = function() {
     var data = LocalStorage.getInvoice();
-    $http.post("http://192.168.225.158:8080/save", data, {}).then( function(response) {
-       console.log(response);
+    console.log(data);
+    $http.post("http://192.168.225.158:8080/invoice/"+$scope.invoice.invoice_number, data, {}).then( function(response) {
+       //console.log(response);
     });
+    //console.log(data);
   };
 
   // Remotes an item from the invoice
@@ -188,18 +210,39 @@ angular.module('invoicing', [])
     angular.forEach($scope.invoice.items, function(item, key){
       total += (item.qty * item.cost);
     });
-    return total;
+    $scope.invoice.subTotal = total;
+    return $scope.invoice.subTotal;
   };
 
+  $scope.invoiceSubTotalWithDiscount = function() {
+    $scope.invoice.totalAfterDiscount = ($scope.invoiceSubTotal() - $scope.invoice.discount);
+    return $scope.invoice.totalAfterDiscount;
+  };
+  
+
+
+  $scope.invoiceSubTotalWithSGST = function() {
+    return ($scope.invoice.totalAfterDiscount * $scope.invoice.tax.sgst/100);
+  };
+  $scope.invoiceSubTotalWithCGST = function() {
+    return ($scope.invoice.totalAfterDiscount * $scope.invoice.tax.cgst/100);
+  };
+  $scope.invoiceSubTotalWithIGST = function() {
+    return ($scope.invoice.totalAfterDiscount * $scope.invoice.tax.igst/100);
+  };
+  
   // Calculates the tax of the invoice
   $scope.calculateTax = function() {
-    return (($scope.invoice.tax * $scope.invoiceSubTotal())/100);
+    $scope.invoice.totalTax = $scope.invoiceSubTotalWithSGST() + $scope.invoiceSubTotalWithCGST() + $scope.invoiceSubTotalWithIGST();
+    return $scope.invoice.totalTax;
   };
+
 
   // Calculates the grand total of the invoice
   $scope.calculateGrandTotal = function() {
+    $scope.invoice.grandTotal =  $scope.calculateTax() + $scope.invoiceSubTotalWithDiscount() +  parseFloat($scope.invoice.pf);
     saveInvoice();
-    return $scope.calculateTax() + $scope.invoiceSubTotal();
+    return $scope.invoice.grandTotal;
   };
 
   // Clears the local storage
@@ -208,6 +251,9 @@ angular.module('invoicing', [])
     if(confirmClear) {
       LocalStorage.clear();
       setInvoice(DEFAULT_INVOICE);
+      $http.get("http://192.168.225.158:8080/count").then( function(response) {
+       $scope.invoice.invoice_number = response.data.count;
+      });
     }
   };
 
